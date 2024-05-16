@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  nodejs-api:
+    image: evenement
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: container_evenement
+    depends_on:
+      - db
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "3006:3006"
+    networks:
+      - service_event_gestion_evenement_default
+
+  db:
+    image: mysql
+    container_name: db-container-event
+    restart: always
+    environment:
+      MYSQL_DATABASE: pfe1
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: root
+    command: --init-file /docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3307:3306"
+    networks:
+      - service_event_gestion_evenement_default
+    volumes:
+      - service_event_gestion_evenement_default:/data/db
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+networks:
+  service_event_gestion_evenement_default:
+    driver: bridge
+
+volumes:
+  service_event_gestion_evenement_default:
