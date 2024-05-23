@@ -1,32 +1,43 @@
+
 const db = require('../config/database');
-const multer  = require('multer')
-const upload = multer({ dest: 'uploads/' })
+const multer = require('multer');
 
-
-var storage = multer.diskStorage({
-	destination: function (req, file, cb) {
-		cb(null, ".\assets\img");
-		cb(null, "C:\Users\ASUS\faika\src\assets\img");
-	},
-	filename: function (req, file, cb) {
-		return cb(null, file.fieldname + '_' + Date.now() + path.extname(file.originalname));
-	}
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './uploads');
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
 });
 
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 1024 * 1024 * 5 },
+}).single('photo');
+
 exports.ajouterEvent = (req, res) => {
-    const { titre, description, prix, lieu, places_disponibles, date_deb, date_fin, categorie_id, photo_url } = req.body;
-    if (!titre || !description || !prix || !lieu || !places_disponibles || !date_deb || !date_fin || !categorie_id || !photo_url) {
-        return res.status(400).json({ message: 'Tous les champs sont requis.' });
-    }
-
-    db.query('INSERT INTO evenement (titre, description, prix, lieu, places_disponibles, date_deb, date_fin, categorie_id, photo_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-        [titre, description, prix, lieu, places_disponibles, date_deb, date_fin, categorie_id, photo_url], (err, result) => {
+    upload(req, res, (err) => {
         if (err) {
-            console.error(err);
-            return res.status(500).json({ message: 'Erreur interne du serveur.' });
+            return res.status(400).json({ message: 'Error uploading file.' });
         }
-
-        return res.status(201).json({ message: 'Événement ajouté avec succès.' });
+        
+        const { titre, description, prix, lieu, places_disponibles, date_deb, date_fin, categorie_id } = req.body;
+        const photo_url = req.file ? req.file.path : null;
+        
+        if (!titre || !description || !prix || !lieu || !places_disponibles || !date_deb || !date_fin || !categorie_id || !photo_url) {
+            return res.status(400).json({ message: 'Tous les champs sont requis.' });
+        }
+        
+        db.query('INSERT INTO evenement (titre, description, prix, lieu, places_disponibles, date_deb, date_fin, categorie_id, photo_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [titre, description, prix, lieu, places_disponibles, date_deb, date_fin, categorie_id, photo_url], (err, result) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json({ message: 'Erreur interne du serveur.' });
+                }
+        
+                return res.status(201).json({ message: 'Événement ajouté avec succès.' });
+            });
     });
 };
 

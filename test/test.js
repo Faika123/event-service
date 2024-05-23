@@ -1,35 +1,194 @@
-const { Builder, By, Key, until } = require('selenium-webdriver');
+const request = require('supertest');
+const db = require('../config/database');
+const express = require('express');
+const bodyParser = require('body-parser');
+const EventRouter = require('../routes/Event');
+const app = express();
 
-(async function example() {
-  let driver = await new Builder().forBrowser('chrome').build();
-  try {
-    // Ouvrir la page d'ajout d'événement
-    await driver.get('http://localhost:3006/ajouter'); // Remplacez l'URL par celle de votre application
+app.use(bodyParser.json());
 
-    // Remplir le formulaire
-    await driver.findElement(By.name('titre')).sendKeys('Mon Événement Test');
-    await driver.findElement(By.name('description')).sendKeys('Ceci est un événement de test');
-    await driver.findElement(By.name('prix')).sendKeys('10');
-    await driver.findElement(By.name('lieu')).sendKeys('Ma ville');
-    await driver.findElement(By.name('places_disponibles')).sendKeys('100');
-    await driver.findElement(By.name('date_deb')).sendKeys('2024-05-15');
-    await driver.findElement(By.name('date_fin')).sendKeys('2024-05-16');
-    await driver.findElement(By.name('categorie_id')).sendKeys('1');
-    await driver.findElement(By.name('photo_url')).sendKeys('/chemin/vers/photo.jpg'); // Mettez le chemin de votre photo
+app.use('', EventRouter);
 
-    // Soumettre le formulaire
-    await driver.findElement(By.name('submit')).click();
 
-    // Attendre le message de succès
-    await driver.wait(until.elementLocated(By.className('success-message')), 5000);
+describe('Tests des routes de catégorie', () => {
+  let categoryId; // Stocker l'ID de la catégorie créée pour les tests ultérieurs
 
-    // Vérifier que l'événement est ajouté
-    const successMessage = await driver.findElement(By.className('success-message')).getText();
-    console.log('Message de succès:', successMessage);
+  // Test pour ajouter une nouvelle catégorie
+  test('Ajouter une nouvelle catégorie', async () => {
+      const response = await request(app)
+          .post('/ajoutercategorie')
+          .send({
+              nom: 'Patrimoine culturel',
+              description: 'Visites guidées, sites historiques, monuments'
+          });
+      
+      expect(response.statusCode).toBe(201);
+      expect(response.body).toHaveProperty('message', 'Catégorie ajoutée avec succès.');
+      categoryId = response.body.id; // Stocker l'ID de la catégorie créée
+  });
 
-    // Ajoutez ici des assertions pour vérifier que l'événement est bien ajouté dans la base de données
+  // Test pour récupérer une catégorie par ID
+  test('Récupérer une catégorie par ID', async () => {
+      const response = await request(app)
+          .get(`/51/listerbyid`);
 
-  } finally {
-    await driver.quit();
-  }
-})();
+      expect(response.statusCode).toBe(200);
+      expect(response.body.nom).toBe('Patrimoine culturel'); // Modifier avec le nom de la catégorie ajoutée
+  });
+
+  // Test pour lister toutes les catégories
+  test('Lister toutes les catégories', async () => {
+      const response = await request(app)
+          .get('/listercategorie');
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  // Test pour modifier une catégorie
+  test('Modifier une catégorie', async () => {
+      const response = await request(app)
+          .put(`/51/modifiercategorie`)
+          .send({
+              nom: 'Patrimoine culturel', // Modifier le nom de la catégorie
+              description: 'Visites guidées, sites historiques, monuments'
+          });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toHaveProperty('message', 'Catégorie modifiée avec succès.');
+  });
+
+  // Test pour supprimer une catégorie
+test('Supprimer une catégorie', async () => {
+  // Supprimer les événements associés à la catégorie
+  await db.query('DELETE FROM categorie WHERE id = ?', [categoryId], async (err, result) => {
+      if (err) {
+          console.error(err);
+          return res.status(500).json({ message: 'Erreur interne du serveur.' });
+      }
+      // Ensuite, supprimer la catégorie
+      const response = await request(app)
+          .delete(`/51/supprimercategorie`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toHaveProperty('message', 'Catégorie supprimée avec succès.');
+  });
+});
+
+
+  // Test pour rechercher une catégorie
+  test('Rechercher une catégorie par nom', async () => {
+      const response = await request(app)
+          .get('/recherchercategorie?nom=Patrimoine');
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.length).toBeGreaterThan(0);
+      expect(response.body[0].nom).toContain('Patrimoine');
+  });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+// Tests des routes de evenement
+describe('Tests des routes de evenement', () => {
+  let eventId; // Stocker l'ID de la evenement créée pour les tests ultérieurs
+
+  // Test pour ajouter une nouvelle evenement
+  test('Ajouter une nouvelle evenement', async () => {
+      const response = await request(app)
+          .post('/ajouter')
+          .send({
+              titre: 'Le salon international Patrimoine culturel',
+              description: 'Le salon international du Patrimoine Culturel est l’évènement de référence qui fédère les professionnels de la restauration et de la sauvegarde du patrimoine bâti ou non bâti, matériel ou immatériel.',
+              prix: 10,
+              lieu: 'SALLE GABRIEL',
+              places_disponibles: 100,
+              date_deb: '2024-05-17',
+              date_fin: '2024-05-17',
+              categorie_id: 45,
+              photo_url: '/assets/img/salon.jpg'
+          });
+      
+      expect(response.statusCode).toBe(201);
+      expect(response.body).toHaveProperty('message', 'Événement ajouté avec succès.');
+      eventId = response.body.id; 
+  });
+
+  // Test pour récupérer une evenement par ID
+  test('Récupérer une evenement par ID', async () => {
+      const response = await request(app)
+          .get(`/36/listereventbyid`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.titre).toBe('Le salon international Patrimoine culturel');
+  });
+
+  // Test pour lister toutes les evenement
+  test('Lister toutes les evenements', async () => {
+      const response = await request(app)
+          .get('/lister');
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  // Test pour modifier une evenement
+  test('Modifier une evenement', async () => {
+      const response = await request(app)
+          .put(`/36/modifier`)
+          .send({
+              titre: 'Le salon international Patrimoine culturels',
+              description: 'Le salon international du Patrimoine Culturel est l’évènement de référence qui fédère les professionnels de la restauration et de la sauvegarde du patrimoine bâti ou non bâti, matériel ou immatériel.',
+              prix: 10,
+              lieu: 'SALLE GABRIEL',
+              places_disponibles: 100,
+              date_deb: '2024-05-17',
+              date_fin: '2024-05-17',
+              categorie_id: 45,
+              photo_url: '/assets/img/salon.jpg'
+          });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toHaveProperty('message', 'Événement modifié avec succès.'); 
+  });
+
+  // Test pour supprimer une evenement
+  test('Supprimer une evenement', async () => {
+    // Supprimer les événements associés à la catégorie
+    await db.query('DELETE FROM evenement WHERE id = ?', [eventId], async (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Erreur interne du serveur.' });
+        }
+        // Ensuite, supprimer la catégorie
+        const response = await request(app)
+            .delete(`/36/supprimer`);
+  
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toHaveProperty('message', 'Catégorie supprimée avec succès.');
+    });
+  });
+  
+  // Test pour rechercher une evenement
+  test('Rechercher une evenement par titre', async () => {
+      const response = await request(app)
+          .get('/rechercher?titre=Le salon international Patrimoine culturel');
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.length).toBeGreaterThan(0);
+      expect(response.body[0].titre).toContain('Le salon international Patrimoine culturel');
+  });
+});
+
+
+
+

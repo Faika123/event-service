@@ -2,13 +2,13 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const cors = require('cors'); 
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const EventRouter = require('./routes/Event'); 
 
 require('dotenv').config(); 
 
 const db = mysql.createConnection({
-  host: process.env.MYSQL_HOST || '127.0.0.1', // Utilisez l'adresse IP de votre serveur MySQL
+  host: process.env.MYSQL_HOST || 'mysql-service', // Utilisez l'adresse IP de votre serveur MySQL
   port: process.env.MYSQL_PORT || 3306,
   user: process.env.MYSQL_USER || 'root',
   password: process.env.MYSQL_PASSWORD || 'root',

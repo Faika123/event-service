@@ -1,0 +1,144 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-configmap
+  namespace: events
+data:
+  pfe1.sql: |
+    -- phpMyAdmin SQL Dump
+    -- version 5.2.1
+    -- https://www.phpmyadmin.net/
+    --
+    -- Hôte : 127.0.0.1
+    -- Généré le : mar. 14 mai 2024 à 10:12
+    -- Version du serveur : 10.4.32-MariaDB
+    -- Version de PHP : 8.2.12
+
+    SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+    START TRANSACTION;
+    SET time_zone = "+00:00";
+
+    -- Base de données : `pfe1`
+    --
+
+    -- Structure de la table `categorie`
+    --
+    CREATE TABLE `categorie` (
+      `id` int(11) NOT NULL,
+      `nom` varchar(254) NOT NULL,
+      `description` text NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    -- Déchargement des données de la table `categorie`
+    --
+    INSERT INTO `categorie` (`id`, `nom`, `description`) VALUES
+    (31, 'cinema', 'tous les catégories de type culturel'),
+    (35, 'theatre', 'Tous les catégories de théâtre, les comédies musicales et les spectacles'),
+    (36, 'Festivals culturels', ' Festivals célébrant la culture locale ou internationale.');
+
+    -- Structure de la table `evenement`
+    --
+    CREATE TABLE `evenement` (
+      `id` int(11) NOT NULL,
+      `titre` text NOT NULL,
+      `description` text NOT NULL,
+      `prix` float NOT NULL,
+      `lieu` text NOT NULL,
+      `places_disponibles` int(11) NOT NULL,
+      `date_deb` date NOT NULL,
+      `date_fin` date NOT NULL,
+      `categorie_id` int(11) NOT NULL,
+      `photo_url` text NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    -- Déchargement des données de la table `evenement`
+    --
+    INSERT INTO `evenement` (`id`, `titre`, `description`, `prix`, `lieu`, `places_disponibles`, `date_deb`, `date_fin`, `categorie_id`, `photo_url`) VALUES
+    (13, 'Rouhaniyet', 'Rouhaniyet Nafta est un Festival dédié aux expressions musicales et artistiques des mystiques, et particulièrement celles issues du patrimoine mondial et national des Soufis.', 20, 'Dar El Ouedi, Médina de Nefta', 30, '2024-05-14', '2024-05-14', 36, '/assets/img/rouhaniyet.jpg'),
+    (14, 'Dachra', 'Dachra (دشرة) est un film d\'horreur tunisien écrit et réalisé par Abdelhamid Bouchnak et sorti en 2018.', 25, ' DERMECH — CINEMADART', 30, '2024-05-11', '2024-05-11', 31, '/assets/img/Dachra.jpg');
+
+    -- Index pour les tables déchargées
+    --
+    ALTER TABLE `categorie`
+      ADD PRIMARY KEY (`id`);
+
+    ALTER TABLE `evenement`
+      ADD PRIMARY KEY (`id`),
+      ADD KEY `categorie_id` (`categorie_id`);
+
+    -- AUTO_INCREMENT pour les tables déchargées
+    --
+    ALTER TABLE `categorie`
+      MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+
+    ALTER TABLE `evenement`
+      MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  pfe1_test.sql: |
+    -- phpMyAdmin SQL Dump
+    -- version 5.2.1
+    -- https://www.phpmyadmin.net/
+    --
+    -- Hôte : 127.0.0.1
+    -- Généré le : mar. 14 mai 2024 à 10:12
+    -- Version du serveur : 10.4.32-MariaDB
+    -- Version de PHP : 8.2.12
+
+    SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+    START TRANSACTION;
+    SET time_zone = "+00:00";
+
+    -- Base de données : `pfe1`
+    --
+
+    -- Structure de la table `categorie`
+    --
+    CREATE TABLE `categorie` (
+      `id` int(11) NOT NULL,
+      `nom` varchar(254) NOT NULL,
+      `description` text NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    -- Déchargement des données de la table `categorie`
+    --
+    INSERT INTO `categorie` (`id`, `nom`, `description`) VALUES
+    (31, 'cinema', 'tous les catégories de type culturel'),
+    (35, 'theatre', 'Tous les catégories de théâtre, les comédies musicales et les spectacles'),
+    (36, 'Festivals culturels', ' Festivals célébrant la culture locale ou internationale.');
+
+    -- Structure de la table `evenement`
+    --
+    CREATE TABLE `evenement` (
+      `id` int(11) NOT NULL,
+      `titre` text NOT NULL,
+      `description` text NOT NULL,
+      `prix` float NOT NULL,
+      `lieu` text NOT NULL,
+      `places_disponibles` int(11) NOT NULL,
+      `date_deb` date NOT NULL,
+      `date_fin` date NOT NULL,
+      `categorie_id` int(11) NOT NULL,
+      `photo_url` text NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    -- Déchargement des données de la table `evenement`
+    --
+    INSERT INTO `evenement` (`id`, `titre`, `description`, `prix`, `lieu`, `places_disponibles`, `date_deb`, `date_fin`, `categorie_id`, `photo_url`) VALUES
+    (13, 'Rouhaniyet', 'Rouhaniyet Nafta est un Festival dédié aux expressions musicales et artistiques des mystiques, et particulièrement celles issues du patrimoine mondial et national des Soufis.', 20, 'Dar El Ouedi, Médina de Nefta', 30, '2024-05-14', '2024-05-14', 36, '/assets/img/rouhaniyet.jpg'),
+    (14, 'Dachra', 'Dachra (دشرة) est un film d\'horreur tunisien écrit et réalisé par Abdelhamid Bouchnak et sorti en 2018.', 25, ' DERMECH — CINEMADART', 30, '2024-05-11', '2024-05-11', 31, '/assets/img/Dachra.jpg');
+
+    -- Index pour les tables déchargées
+    --
+    ALTER TABLE `categorie`
+      ADD PRIMARY KEY (`id`);
+
+    ALTER TABLE `evenement`
+      ADD PRIMARY KEY (`id`),
+      ADD KEY `categorie_id` (`categorie_id`);
+
+    -- AUTO_INCREMENT pour les tables déchargées
+    --
+    ALTER TABLE `categorie`
+      MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+
+    ALTER TABLE `evenement`
+      MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
