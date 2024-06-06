@@ -1,0 +1,6 @@
+projectKey=service_event
+serverUrl=http://localhost:9000
+serverVersion=10.5.1.90531
+dashboardUrl=http://localhost:9000/dashboard?id=service_event
+ceTaskId=4de5ada3-9e17-431d-851f-84dfa3fbd20d
+ceTaskUrl=http://localhost:9000/api/ce/task?id=4de5ada3-9e17-431d-851f-84dfa3fbd20d

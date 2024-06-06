@@ -54,19 +54,7 @@ pipeline {
             }
         }
 
-        stage('Deploy Docker image') {
-            steps {
-                script {
-                    // Push Docker image to Docker Hub
-                    withCredentials([string(credentialsId: 'token', variable: 'DOCKER_TOKEN')]) {
-                        docker.withRegistry('https://index.docker.io/v1/', '12') {
-                            // Push both the latest and tagged images
-                            docker.image('faika/evenement:latest').push('latest')
-                        }
-                    }
-                }
-            }
-        }
+        
     }
 
     post {
