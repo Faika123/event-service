@@ -1,29 +1,20 @@
 pipeline {
     agent any
-
     environment {
+        DOCKER_PATH = "C:\\Program Files\\Docker\\cli-plugins"
         NODEJS_PATH = "C:\\Program Files\\nodejs"
-        // Variables Docker
-        DOCKER_IMAGE_NAME = "service_event"
-        DOCKER_IMAGE_TAG = "latest"
-        DOCKER_REGISTRY = "docker.io"
-        DOCKER_CREDENTIALS_ID = "dockerhub"
-        
-        // Variables SonarQube
-        SONARQUBE_URL = "http://localhost:9000"
-        SONARQUBE_CREDENTIALS_ID = "sonarqube-credentials"
+        PATH = "${DOCKER_PATH};${NODEJS_PATH};${env.PATH}"
     }
-
     stages {
         stage('Install Node.js and npm') {
             steps {
                 script {
                     def nodejs = tool name: 'NODEJS', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
-                    env.PATH = "${nodejs}/bin:${env.PATH}"
+                    env.PATH = "${nodejs}/bin;${env.PATH}"
                 }
             }
         }
-        
+
         stage('Checkout') {
             steps {
                 script {
@@ -32,54 +23,47 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Build & Rename Docker Image') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh 'npm install'
-                    sh 'npm run sonar'
+                script {
+                    bat "docker build -t evenements:latest ."
+                    bat "docker tag evenements:latest faika/evenements:latest"
                 }
             }
         }
 
-        stage('Unit Tests') {
-            steps {
-                sh 'npm test'
-            }
-        }
-
-        stage('Build') {
+        stage('Run Docker Container') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}")
+                    // Clean up any existing container
+                    bat "docker stop evenements_container_latest || exit 0"
+                    bat "docker rm evenements_container_latest || exit 0"
+                    
+                    // Run the new container
+                    bat "docker run -d -p 8336:3006 --name evenements_container_latest faika/evenements:latest"
                 }
             }
         }
 
-        stage('Run Docker Image') {
+        stage('Publish Docker Image') {
             steps {
                 script {
-                    docker.image("${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}").run()
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${DOCKER_CREDENTIALS_ID}") {
-                        docker.image("${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}").push()
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        bat 'docker login -u %DOCKERHUB_USERNAME% -p %DOCKERHUB_PASSWORD%'
+                        bat 'docker tag faika/evenements:latest faika/evenements:%BUILD_ID%'
+                        bat 'docker push faika/evenements:%BUILD_ID%'
+                        bat 'docker push faika/evenements:latest'
                     }
                 }
             }
         }
     }
-
     post {
         success {
-            echo 'Pipeline succeeded!'
+            echo 'Build succeeded!'
         }
         failure {
-            echo 'Pipeline failed!'
+            echo 'Build failed!'
         }
     }
 }
