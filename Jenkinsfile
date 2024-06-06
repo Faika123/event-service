@@ -2,70 +2,84 @@ pipeline {
     agent any
 
     environment {
-        NODEJS_HOME = tool name: 'NodeJS', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
-        PATH = "${env.NODEJS_HOME}/bin:${env.PATH}"
-        CHROME_BIN = '/usr/bin/google-chrome' // Path to Chrome binary
-        DOCKER_HUB_REGISTRY = 'docker.io' // Docker Hub registry URL
+        NODEJS_PATH = "C:\\Program Files\\nodejs"
+        // Variables Docker
+        DOCKER_IMAGE_NAME = "service_event"
+        DOCKER_IMAGE_TAG = "latest"
+        DOCKER_REGISTRY = "docker.io"
+        DOCKER_CREDENTIALS_ID = "dockerhub"
+        
+        // Variables SonarQube
+        SONARQUBE_URL = "http://localhost:9000"
+        SONARQUBE_CREDENTIALS_ID = "sonarqube-credentials"
     }
 
     stages {
+        stage('Install Node.js and npm') {
+            steps {
+                script {
+                    def nodejs = tool name: 'NODEJS', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
+                    env.PATH = "${nodejs}/bin:${env.PATH}"
+                }
+            }
+        }
+        
         stage('Checkout') {
             steps {
-                checkout scm
+                script {
+                    checkout scm
+                }
             }
         }
 
-        stage('Install dependencies') {
-          steps {
-    sh '${NODEJS_HOME}/bin/npm install'
-    // sh '${NODEJS_HOME}/bin/npm install jest --save-dev'
-    // sh '${NODEJS_HOME}/bin/npm install bcrypt'
-}
-            }
-        
-
-        stage('Fix Permissions') {
+        stage('SonarQube Analysis') {
             steps {
-                // Fix permissions for the project directory and node_modules
-                sh 'chmod -R 777 .'
+                withSonarQubeEnv('SonarQube') {
+                    sh 'npm install'
+                    sh 'npm run sonar'
+                }
             }
         }
 
+        stage('Unit Tests') {
+            steps {
+                sh 'npm test'
+            }
+        }
 
         stage('Build') {
             steps {
-                // sh 'node app.js'
-                sh 'npm run build'
+                script {
+                    docker.build("${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}")
+                }
             }
         }
 
-        // stage('Test') {
-        //     steps {
-        //         // Run Jest tests
-        //         sh 'npm test'
-        //     }
-        // }
-
-        stage('Build Docker image') {
+        stage('Run Docker Image') {
             steps {
-                sh 'docker build -t evenement:latest -f Dockerfile .'
-                // Tag the Docker image with a version
-                sh 'docker tag evenement:latest faika/evenement:latest'
+                script {
+                    docker.image("${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}").run()
+                }
             }
         }
 
-        
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${DOCKER_CREDENTIALS_ID}") {
+                        docker.image("${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}").push()
+                    }
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo 'Build succeeded!'
-            // Add any success post-build actions here
+            echo 'Pipeline succeeded!'
         }
-
         failure {
-            echo 'Build failed!'
-            // Add any failure post-build actions here
+            echo 'Pipeline failed!'
         }
     }
 }
