@@ -23,6 +23,16 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    withSonarQubeEnv('SonarQube Test') {
+                        bat 'npm run sonar'
+                    }
+                }
+            }
+        }
+        
         stage('Build & Rename Docker Image') {
             steps {
                 script {
@@ -41,6 +51,14 @@ pipeline {
                         bat 'docker push faika/evenements_service:%BUILD_ID%'
                         bat 'docker push faika/evenements_service:latest'
                     }
+                }
+            }
+        }
+        stage('kubernetes Deployment') {
+            steps {
+                script {
+                   bat 'kubectl apply -f event-deployment.yaml'
+                   bat 'kubectl apply -f event-service.yaml' 
                 }
             }
         }

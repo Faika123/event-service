@@ -1,0 +1,5 @@
+kubectl exec -it mysql-deployment-74ff598874-srx8r -n events -- /bin/bash
+mysql -u root -p
+use pfe;
+show tables;
+select * from evenemnts;
