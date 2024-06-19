@@ -22,16 +22,6 @@ pipeline {
                 }
             }
         }
-
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    withSonarQubeEnv('SonarQube Test') {
-                        bat 'npm run sonar'
-                    }
-                }
-            }
-        }
         
         stage('Build & Rename Docker Image') {
             steps {
