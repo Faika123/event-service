@@ -3,7 +3,7 @@ pipeline {
     environment {
         DOCKER_PATH = "C:\\Program Files\\Docker\\cli-plugins"
         NODEJS_PATH = "C:\\Program Files\\nodejs"
-        SONAR_SCANNER_HOME = "C:\Program Files\sonar-scanner-5.0.1.3006-windows" 
+        SONAR_SCANNER_HOME = "C:\\Program Files\\sonar-scanner-5.0.1.3006-windows" 
         PATH = "${SONAR_SCANNER_HOME}\\bin;${NODEJS_PATH};${DOCKER_PATH};${env.PATH}"
     }
     stages {
